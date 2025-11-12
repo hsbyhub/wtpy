@@ -27,3 +27,6 @@ ParserCTPFlow
 *.con
 *.dmb
 *.dsb
+
+
+.codemap
