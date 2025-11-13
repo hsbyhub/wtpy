@@ -43,17 +43,7 @@ uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 echo ""
 echo "🔍 验证安装..."
 if python src/main.py --help &> /dev/null; then
-    echo "✅ 安装成功！"
-    echo ""
-    echo "📝 下一步："
-    echo "  1. 激活虚拟环境: source .venv/bin/activate"
-    echo "  2. 运行程序: python src/main.py --help"
-    echo "  3. 下载数据: python src/main.py download_bars --code=\"SSE.STK.600008\""
-    echo "  4. 运行回测: python src/main.py cta_stk_bt"
-else
+    echo "✅ 初始化开发环境成功！"
+else 
     echo "⚠️  警告: 无法验证安装，请手动检查"
 fi
-
-echo ""
-echo "✨ 初始化完成！"
-

@@ -20,6 +20,10 @@ STORAGE_PATH = os.path.join(CURRENT_DIR, 'storage')
 OUTPUTS_PATH = os.path.join(CURRENT_DIR, 'outputs')
 LOGCFG_FILE = os.path.join(CURRENT_DIR, 'logcfgbt.yaml')
 CONFIGBT_FILE = os.path.join(CURRENT_DIR, 'configbt.yaml')
+COMM_FILE = os.path.join(CURRENT_DIR, 'common/stk_comms.json')
+CONTRACT_FILE = os.path.join(CURRENT_DIR, 'common/stocks.json')
+HOLIDAY_FILE = os.path.join(CURRENT_DIR, 'common/holidays.json')
+SESSION_FILE = os.path.join(CURRENT_DIR, 'common/stk_sessions.json')
 
 CODES = [
     "SSE.STK.600008",
@@ -47,9 +51,12 @@ def cta_stk_bt(
     #创建一个运行环境，并加入策略
     engine = WtBtEngine(EngineType.ET_CTA, logCfg=LOGCFG_FILE, outDir=OUTPUTS_PATH)
     engine.init(
+        cfgfile=CONFIGBT_FILE,
         folder=COMMON_PATH, 
-        commfile="stk_comms.json", 
-        contractfile="stocks.json",
+        commfile=COMM_FILE, 
+        contractfile=CONTRACT_FILE,
+        holidayfile=HOLIDAY_FILE,
+        sessionfile=SESSION_FILE,
     )
     engine.configBacktest(start_time, end_time)
     engine.configBTStorage(mode="csv", path=STORAGE_PATH)
@@ -86,6 +93,10 @@ def run_explore_stra_dual_thrust_params(code:str="SSE.ETF.510300", stk:str="fals
         outputs_path=OUTPUTS_PATH,
         logcfg_file=LOGCFG_FILE,
         configbt_file=CONFIGBT_FILE,
+        comm_file=COMM_FILE,
+        contract_file=CONTRACT_FILE,
+        holiday_file=HOLIDAY_FILE,
+        session_file=SESSION_FILE,
 
         code=code,
         isForStk= stk == "true",

@@ -38,6 +38,10 @@ class StraDualThrustBtParam:
                  k1: float,
                  k2: float,
                  isForStk: bool = True,
+                 comm_file: str = None,
+                 contract_file: str = None,
+                 holiday_file: str = None,
+                 session_file: str = None,
     ):
         self.common_path = common_path
         self.storage_path = storage_path
@@ -55,6 +59,10 @@ class StraDualThrustBtParam:
         self.k1 = k1
         self.k2 = k2
         self.isForStk = isForStk
+        self.comm_file = comm_file
+        self.contract_file = contract_file
+        self.holiday_file = holiday_file
+        self.session_file = session_file
         self.name = self._generate_name()
     
     def _generate_name(self) -> str:
@@ -84,6 +92,10 @@ class StraDualThrustExplorerConfig:
                  k1_list: List[float],
                  k2_list: Optional[List[float]],
                  isForStk: bool,
+                 comm_file: Optional[str] = None,
+                 contract_file: Optional[str] = None,
+                 holiday_file: Optional[str] = None,
+                 session_file: Optional[str] = None,
                  output_file: Optional[str] = None,
                  num_workers: Optional[int] = None):
         """
@@ -125,6 +137,10 @@ class StraDualThrustExplorerConfig:
         self.k1_list = k1_list
         self.k2_list = k2_list if k2_list is not None else self.k1_list
         self.isForStk = isForStk
+        self.comm_file = comm_file
+        self.contract_file = contract_file
+        self.holiday_file = holiday_file
+        self.session_file = session_file
         self.output_file = output_file
         self.num_workers = num_workers
 
@@ -180,7 +196,11 @@ def explore_stra_dual_thrust_params(config: StraDualThrustExplorerConfig) -> pd.
             days=days,
             k1=k1,
             k2=k2,
-            isForStk=config.isForStk
+            isForStk=config.isForStk,
+            comm_file=config.comm_file,
+            contract_file=config.contract_file,
+            holiday_file=config.holiday_file,
+            session_file=config.session_file
         )
         param_objects.append(param)
     
@@ -240,10 +260,17 @@ def explore_stra_dual_thrust_params(config: StraDualThrustExplorerConfig) -> pd.
                             '胜率': f"{win_rate:.1f}%"
                         })
                     else:
+                        error_msg = result.get('error', 'Unknown error')
+                        # 截断过长的错误信息
+                        if len(error_msg) > 50:
+                            error_msg = error_msg[:47] + '...'
                         pbar.set_postfix({
                             '当前': f"b{param.barCnt}_d{param.days}_k1{param.k1}_k2{param.k2}",
-                            '状态': '失败'
+                            '状态': f'失败: {error_msg}'
                         })
+                        # 打印详细错误信息（前几个失败的任务）
+                        if completed <= 5:  # 只打印前5个失败的错误，避免输出过多
+                            print(f"\n❌ 回测失败 [{param.name}]: {result.get('error', 'Unknown error')}")
                     
                     results.append(result)
                 except Empty:
@@ -256,6 +283,20 @@ def explore_stra_dual_thrust_params(config: StraDualThrustExplorerConfig) -> pd.
                         'k1': param.k1,
                         'k2': param.k2,
                         'error': 'Process did not return result',
+                        'net_profit': 0,
+                        'win_rate': 0,
+                        'max_drawdown': 0,
+                        'total_trades': 0,
+                        'win_trades': 0,
+                        'loss_trades': 0,
+                        'total_profit': 0,
+                        'total_fees': 0,
+                        'total_profit_from_trades': 0,
+                        'avg_profit': 0,
+                        'max_profit': 0,
+                        'max_loss': 0,
+                        'final_balance': param.init_capital,
+                        'total_return_pct': 0,
                         '_idx': idx
                     })
                 
@@ -315,11 +356,26 @@ def on_stra_dual_thrust_backtest(param: StraDualThrustBtParam, result_queue: mul
         engine = WtBtEngine(EngineType.ET_CTA, logCfg=param.logcfg_file, outDir=param.outputs_path)
         
         # 初始化引擎
+        # 处理文件路径：如果提供了完整路径，提取相对于 common_path 的相对路径或文件名
+        def get_relative_path(full_path, base_path, default_name):
+            if not full_path:
+                return default_name
+            if os.path.isabs(full_path):
+                # 如果是绝对路径，尝试计算相对于 base_path 的相对路径
+                try:
+                    rel_path = os.path.relpath(full_path, base_path)
+                    return rel_path if not rel_path.startswith('..') else os.path.basename(full_path)
+                except:
+                    return os.path.basename(full_path)
+            return full_path
+        
         engine.init(
             folder=param.common_path,
             cfgfile=param.configbt_file,
-            commfile="stk_comms.json",
-            contractfile="stocks.json",
+            commfile=get_relative_path(param.comm_file, param.common_path, "stk_comms.json"),
+            contractfile=get_relative_path(param.contract_file, param.common_path, "stocks.json"),
+            holidayfile=get_relative_path(param.holiday_file, param.common_path, None),
+            sessionfile=get_relative_path(param.session_file, param.common_path, None),
         )
         engine.configBacktest(param.start_time, param.end_time)
         engine.configBTStorage(mode="csv", path=param.storage_path)
@@ -377,7 +433,7 @@ def on_stra_dual_thrust_backtest(param: StraDualThrustBtParam, result_queue: mul
             except:
                 pass
         
-        # 返回错误结果
+        # 返回错误结果（确保包含所有必需字段）
         result_queue.put({
             'name': param.name,
             'barCnt': param.barCnt,
@@ -386,6 +442,20 @@ def on_stra_dual_thrust_backtest(param: StraDualThrustBtParam, result_queue: mul
             'k1': param.k1,
             'k2': param.k2,
             'error': str(e),
+            'net_profit': 0,
+            'win_rate': 0,
+            'max_drawdown': 0,
+            'total_trades': 0,
+            'win_trades': 0,
+            'loss_trades': 0,
+            'total_profit': 0,
+            'total_fees': 0,
+            'total_profit_from_trades': 0,
+            'avg_profit': 0,
+            'max_profit': 0,
+            'max_loss': 0,
+            'final_balance': param.init_capital,
+            'total_return_pct': 0,
             '_idx': idx
         })
 

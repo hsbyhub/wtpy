@@ -2,7 +2,7 @@
 name = "myapp"
 version = "0.1.0"
 description = "WonderTrader Python 量化交易应用"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     # 核心框架
     "wtpy>=0.9.9.3",
