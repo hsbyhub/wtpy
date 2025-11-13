@@ -3,7 +3,7 @@ root:
     level: debug
     sinks:
     -   type: basic_file_sink
-        filename: outputs_bt/logs/Runner.log
+        filename: outputs/logs/Runner.log
         pattern: '[%Y.%m.%d %H:%M:%S - %-5l] %v'
         truncate: true
         
@@ -16,7 +16,7 @@ dyn_pattern:
         async: false
         level: debug
         sinks:
-        -   filename: outputs_bt/logs/Strategy_%s.log
+        -   filename: outputs/logs/Strategy_%s.log
             pattern: '[%Y.%m.%d %H:%M:%S - %-5l] %v'
             truncate: false
             type: basic_file_sink

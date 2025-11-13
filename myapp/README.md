@@ -153,5 +153,5 @@ pip install -e ".[dev]"
 
 - 本项目**不需要打包**，直接运行 `python src/main.py` 即可
 - 虚拟环境目录 `.venv/` 已添加到 `.gitignore`，不会提交到 Git
-- 数据文件（`storage/`, `outputs_bt/`）也不会提交到 Git
+- 数据文件（`storage/`, `outputs/`）也不会提交到 Git
 
