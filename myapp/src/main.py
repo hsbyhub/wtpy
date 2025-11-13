@@ -16,9 +16,6 @@ STORAGE_PATH = os.path.join(CURRENT_DIR, 'storage')
 OUTPUTS_PATH = os.path.join(CURRENT_DIR, 'outputs_bt')
 LOGCFG_FILE = os.path.join(CURRENT_DIR, 'logcfgbt.yaml')
 
-
-# sshpass  -p123456 ssh root@localhost -p20022 'cd /root/workspace/projects/wtpy/myapp && python3 run_stk_bt.py'
-
 def cta_stk_bt(start_time:int=202501010930, end_time:int=202510311500):
     #创建一个运行环境，并加入策略
     engine = WtBtEngine(EngineType.ET_CTA, logCfg=LOGCFG_FILE, outDir=OUTPUTS_PATH)
